@@ -1,4 +1,4 @@
-# CursedKreta
+# Cursed E-napló
 
 ## Setup
 * Download the project then `go run *.go`
