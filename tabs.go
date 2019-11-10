@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	gc "github.com/gbin/goncurses"
 	"github.com/thegergo02/gokreta"
-	"strconv"
 	"strings"
 )
 
@@ -34,12 +34,12 @@ func SwitchToTab(tabName string, windows []*gc.Window, oldWidgetWins []*gc.Windo
 	case "dashboard":
 		lines := []string{
 			"Student Informations:",
-			"- Name: " + student.Name + " (" + strconv.Itoa(student.Id) + ")",
-			"- Place of birth: " + student.PlaceOfBirth,
+			fmt.Sprintf("- Name: %s (%d)", student.Name, student.Id),
+			fmt.Sprintf("- Place of birth: %s", student.PlaceOfBirth),
 			"- Form teacher: ",
-			"-- Name: " + student.FormTeacher.Name + " (" + strconv.Itoa(student.FormTeacher.Id) + ")",
-			"-- Email: " + student.FormTeacher.Email,
-			"-- Phone Number: " + student.FormTeacher.PhoneNumber,
+			fmt.Sprintf("-- Name: %s (%d)", student.FormTeacher.Name, student.FormTeacher.Id),
+			fmt.Sprintf("-- Email: %s", student.FormTeacher.Email),
+			fmt.Sprintf("-- Phone Number: %s", student.FormTeacher.PhoneNumber),
 		}
 		widgetWin, err := CreateWidgetAtPos(GetPositionByName("center", windows, GetWidgetSize(lines)), lines)
 		if err != nil {
@@ -48,14 +48,43 @@ func SwitchToTab(tabName string, windows []*gc.Window, oldWidgetWins []*gc.Windo
 		widgetWins = append(widgetWins, widgetWin)
 		break
 	case "avg":
-		lines := []string{}
 		for i, e := range student.SubjectAverages {
-			lines = append(lines, "- Subject: "+e.Subject+" ("+strconv.Itoa(i)+")")
-			lines = append(lines, "-- Subject Category: "+e.SubjectCategoryName)
-			lines = append(lines, "-- Your average: "+strconv.FormatFloat(e.Value, 'f', -1, 64))
-			lines = append(lines, "-- Class average: "+strconv.FormatFloat(e.ClassValue, 'f', -1, 64))
-			lines = append(lines, "-- Difference: "+strconv.FormatFloat(e.Difference, 'f', -1, 64))
+			lines := []string{}
+			lines = append(lines, fmt.Sprintf("- Subject: %s (%d)", e.Subject, i))
+			lines = append(lines, fmt.Sprintf("-- Subject Category: %s", e.SubjectCategoryName))
+			lines = append(lines, fmt.Sprintf("-- Your average: %.2f", e.Value))
+			lines = append(lines, fmt.Sprintf("-- Class average: %.2f", e.ClassValue))
+			lines = append(lines, fmt.Sprintf("-- Difference: %.2f", e.Difference))
 			widgetWin, err := CreateWidgetAtPos(GetPositionByName("top-left", windows, GetWidgetSize(lines)), lines)
+			if err != nil {
+				return widgetWins, err
+			}
+			widgetWins = append(widgetWins, widgetWin)
+		}
+		break
+	case "evals":
+		var y_lines int
+		for i := range student.Evaluations {
+			lines := []string{}
+			e := student.Evaluations[i]
+			lines = append(lines, fmt.Sprintf("- Type: %s", e.TypeName))
+			lines = append(lines, fmt.Sprintf("- Subject: %s", e.Subject))
+			lines = append(lines, fmt.Sprintf("- Mode: %s", e.Mode))
+			lines = append(lines, fmt.Sprintf("- Weight: %s", e.Weight))
+			lines = append(lines, fmt.Sprintf("- Subject Category: %s", e.SubjectCategory))
+			lines = append(lines, fmt.Sprintf("- Form: %s", e.FormName))
+			lines = append(lines, fmt.Sprintf("- Theme: %s", e.Theme))
+			lines = append(lines, fmt.Sprintf("- Affects Average?: %t", e.DoesCountIntoAvg))
+			lines = append(lines, fmt.Sprintf("- Value: %s (%d)", e.Value, e.NumberValue))
+			lines = append(lines, fmt.Sprintf("- Teacher: %s", e.Teacher))
+			lines = append(lines, fmt.Sprintf("- Date: %s", e.Date))
+			lines = append(lines, "- Nature:")
+			lines = append(lines, fmt.Sprintf("-- Name: %s", e.Nature.Name))
+			lines = append(lines, fmt.Sprintf("-- Description: %s", e.Nature.Description))
+			pos := GetPositionByName("top-left", windows, GetWidgetSize(lines))
+			pos[0] += y_lines
+			y_lines += len(lines) + 2
+			widgetWin, err := CreateWidgetAtPos(pos, lines)
 			if err != nil {
 				return widgetWins, err
 			}
@@ -77,6 +106,7 @@ func SwitchToTab(tabName string, windows []*gc.Window, oldWidgetWins []*gc.Windo
 		windows[0].Refresh()
 		for i := range oldWidgetWins {
 			oldWidgetWins[i].Erase()
+			oldWidgetWins[i].Refresh()
 			oldWidgetWins[i].Delete()
 		}
 	}
